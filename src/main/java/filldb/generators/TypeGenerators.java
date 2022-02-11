@@ -2,8 +2,10 @@ package filldb.generators;
 
 import filldb.model.Column;
 import filldb.model.Value;
-import genregex.Generex;
+import com.mifmif.common.regex.Generex;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
@@ -27,13 +29,24 @@ public enum TypeGenerators {;
             , entry("varchar", newVarCharGenerator())
             , entry("text", newTextGenerator())
             , entry("decimal", newDecimalGenerator())
+            , entry("timestamp", newTimeStamp())
+            , entry("datetime", newTimeStamp())
             );
+    }
+
+    public static ValueGenerator newTimeStamp() {
+        final Function<Column, Boolean> canGenerateFor = column -> "timestamp".equals(column.dataType) ||
+        "datetime".equals(column.dataType);
+        long now = Instant.now().getEpochSecond();
+        return newValueGenerator("Fallback text", canGenerateFor, column ->
+                                (index, statement) -> statement.setString(index, new Timestamp(now).toString()));
     }
 
     public static ValueGenerator newTextGenerator() {
         final Function<Column, Boolean> canGenerateFor = column -> "text".equals(column.dataType);
+        int now = Instant.now().getNano();
         return newValueGenerator("Fallback text", canGenerateFor, column ->
-            (index, statement) -> statement.setString(index, LORUM_IPSUM));
+            (index, statement) -> statement.setString(index, index+LORUM_IPSUM+now));
     }
 
     public static ValueGenerator newVarCharGenerator() {
@@ -46,7 +59,7 @@ public enum TypeGenerators {;
             if (!column.isUnique) {
                 return (index, statement) -> statement.setString(index, generator.random());
             } else {
-                final Iterator<String> it = generator.iterator();
+                final Iterator<String> it = (Iterator<String>) generator.iterator();
                 return (index, statement) -> {
                     if (!it.hasNext())
                         throw new IllegalArgumentException("Not possible to generate additional values for column " + column.name + " with type " + column.dataType);

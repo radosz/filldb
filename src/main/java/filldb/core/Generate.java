@@ -1,5 +1,6 @@
 package filldb.core;
 
+import com.mifmif.common.regex.Generex;
 import filldb.error.NoSuchGenerator;
 import filldb.generators.LorumIpsumGenerator;
 import filldb.generators.ValueGenerator;
@@ -8,7 +9,6 @@ import filldb.model.CliArguments;
 import filldb.model.Column;
 import filldb.model.ForeignKey;
 import filldb.model.Table;
-import genregex.Generex;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static filldb.core.Schema.selectIds;
 import static filldb.core.Util.randomItemFrom;
@@ -25,11 +26,14 @@ import static filldb.generators.DataGenerators.newDataGenerators;
 import static filldb.generators.LorumIpsumGenerator.newLorumIpsumGenerators;
 import static filldb.generators.TypeGenerators.newTypeGenerators;
 import static filldb.generators.ValueGenerator.detectGenerator;
+import static filldb.generators.ValueGenerator.newValueGenerator;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
 public enum Generate {;
+
+    static int i = 0;
 
     public static List<String> fillDatabase(final Connection connection, final List<Table> tables
             , final CliArguments arguments) throws SQLException, NoSuchGenerator {
@@ -123,8 +127,14 @@ public enum Generate {;
         final var typeGenerator = detectGenerator(typeGenerators, column, null);
         if (typeGenerator != null) return typeGenerator.newValueSetter(column);
 
-        throw new SQLException("Could not find a generator for column '" + column.name +
-                "' in table '" + table.name + "' with type '" + column.dataType + "'");
+        return newRandoGen().newValueSetter(column);
+    }
+
+    public static ValueGenerator newRandoGen() {
+        final Function<Column, Boolean> canGenerateFor = column -> null != column.dataType;
+        Integer rand = i++;
+        return newValueGenerator("Fallback text", canGenerateFor, column ->
+                (index, statement) -> statement.setString(index, rand.toString()));
     }
 
     private static ValueSetter newForeignKeySetter(final Connection connection, final ForeignKey fk) throws SQLException {
