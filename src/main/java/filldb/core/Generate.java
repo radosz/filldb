@@ -91,8 +91,9 @@ public enum Generate {
 
         final List<String> queries = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
+            PreparedStatement statement = null;
             try {
-                final PreparedStatement statement = connection.prepareStatement(insertQuery);
+                statement = connection.prepareStatement(insertQuery);
                 int j = 0;
                 for (final Column column : table.columns) {
                     if (column.isAutoIncrementing) continue;
@@ -105,8 +106,9 @@ public enum Generate {
                 if (!ignoreErrors) {
                     e.printStackTrace();
                 }
+                String query = null == statement? insertQuery:statement.toString();
                 System.err.println("[ERROR] Failed to execute query");
-                System.err.println("[ERROR] Query: " + insertQuery);
+                System.err.println("[ERROR] Query: " + query);
                 System.err.println("[ERROR] Error: " + e.getMessage());
             }
             queries.add(insertQuery);

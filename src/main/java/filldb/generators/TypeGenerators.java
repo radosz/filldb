@@ -5,10 +5,12 @@ import filldb.model.Column;
 import filldb.model.Value;
 import com.mifmif.common.regex.Generex;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.Function;
 
 import static filldb.core.Constants.LORUM_IPSUM;
@@ -20,34 +22,45 @@ import static java.lang.Math.round;
 import static java.lang.String.format;
 import static java.util.Map.entry;
 
-public enum TypeGenerators {;
+public enum TypeGenerators {
+    ;
 
     public static Map<String, ValueGenerator> newTypeGenerators() {
         return Map.ofEntries
-            ( entry("bigint", newBigIntGenerator())
-            , entry("bit", newBitGenerator())
-            , entry("int", newIntGenerator())
-            , entry("varchar", newVarCharGenerator())
-            , entry("text", newTextGenerator())
-            , entry("decimal", newDecimalGenerator())
-            , entry("timestamp", newTimeStamp())
-            , entry("datetime", newTimeStamp())
-            );
+                (entry("bigint", newBigIntGenerator())
+                        , entry("bit", newBitGenerator())
+                        , entry("int", newIntGenerator())
+                        , entry("varchar", newVarCharGenerator())
+                        , entry("text", newTextGenerator())
+                        , entry("decimal", newDecimalGenerator())
+                        , entry("timestamp", newTimeStamp())
+                        , entry("datetime", newTimeStamp())
+                        , entry("float", newFloat())
+                );
+    }
+
+    public static ValueGenerator newFloat() {
+        final Function<Column, Boolean> canGenerateFor = column -> "float".equals(column.dataType);
+        int randInt = new Random().nextInt();
+        BigDecimal bd = new BigDecimal(new Random(randInt).nextFloat());
+        Float number = Float.valueOf(bd.toString().substring(0,7));
+        return newValueGenerator("Fallback text", canGenerateFor, column ->
+                (index, statement) -> statement.setFloat(index, number));
     }
 
     public static ValueGenerator newTimeStamp() {
         final Function<Column, Boolean> canGenerateFor = column -> "timestamp".equals(column.dataType) ||
-        "datetime".equals(column.dataType);
+                "datetime".equals(column.dataType);
         long now = Instant.now().getEpochSecond();
         return newValueGenerator("Fallback text", canGenerateFor, column ->
-                                (index, statement) -> statement.setString(index, new Timestamp(now).toString()));
+                (index, statement) -> statement.setString(index, new Timestamp(now).toString()));
     }
 
     public static ValueGenerator newTextGenerator() {
         final Function<Column, Boolean> canGenerateFor = column -> "text".equals(column.dataType);
         int now = Instant.now().getNano();
         return newValueGenerator("Fallback text", canGenerateFor, column ->
-            (index, statement) -> statement.setString(index, index+LORUM_IPSUM+now));
+                (index, statement) -> statement.setString(index, index + LORUM_IPSUM + now));
     }
 
     public static ValueGenerator newVarCharGenerator() {
@@ -103,12 +116,12 @@ public enum TypeGenerators {;
     public static ValueGenerator newBitGenerator() {
         final Function<Column, Boolean> canGenerateFor = column -> "bit".equals(column.dataType);
         return newValueGenerator("Fallback bit", canGenerateFor, column ->
-            (index, statement) -> statement.setBoolean(index, isTrue(round(random()))));
+                (index, statement) -> statement.setBoolean(index, isTrue(round(random()))));
     }
 
     public static ValueGenerator newDecimalGenerator() {
         final Function<Column, Boolean> canGenerateFor = column -> "decimal".equals(column.dataType);
         return newValueGenerator("Fallback decimal", canGenerateFor, column ->
-            (index, statement) -> statement.setInt(index, randomInt(50)));
+                (index, statement) -> statement.setInt(index, randomInt(50)));
     }
 }

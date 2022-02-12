@@ -15,6 +15,8 @@ import static java.lang.String.format;
 
 public enum Schema {;
 
+    static int i = 0;
+
     private static final String SELECT_DATABASE = "SELECT DATABASE();";
     private static final String SELECT_TABLES = "SHOW TABLES;";
     private static final String SELECT_COLUMN_NAMES =
@@ -116,7 +118,7 @@ public enum Schema {;
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new SQLException("Unparsable number in character max length: " + value);
+            return i++;
         }
     }
 
