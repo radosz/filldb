@@ -1,5 +1,6 @@
 package filldb.generators;
 
+import com.mifmif.common.regex.GenerexIterator;
 import filldb.model.Column;
 import filldb.model.Value;
 import com.mifmif.common.regex.Generex;
@@ -59,7 +60,7 @@ public enum TypeGenerators {;
             if (!column.isUnique) {
                 return (index, statement) -> statement.setString(index, generator.random());
             } else {
-                final Iterator<String> it = (Iterator<String>) generator.iterator();
+                final GenerexIterator it = (GenerexIterator) generator.iterator();
                 return (index, statement) -> {
                     if (!it.hasNext())
                         throw new IllegalArgumentException("Not possible to generate additional values for column " + column.name + " with type " + column.dataType);

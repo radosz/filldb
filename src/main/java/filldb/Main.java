@@ -18,7 +18,10 @@ public enum Main {;
             .onHelpPrintHelpAndExit()
             .parse(args);
 
-        if (arguments.clearDbFirst) clearDatabase(arguments);
+        if (arguments.clearDbFirst) {
+            clearDatabase(arguments);
+            return;
+        }
         fillDatabase(arguments);
     }
 

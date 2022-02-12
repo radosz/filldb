@@ -31,14 +31,15 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 
-public enum Generate {;
+public enum Generate {
+    ;
 
     static int i = 0;
 
     public static List<String> fillDatabase(final Connection connection, final List<Table> tables
             , final CliArguments arguments) throws SQLException, NoSuchGenerator {
 
-        final List<String> queries = new ArrayList<>(tables.size()*arguments.numQueries);
+        final List<String> queries = new ArrayList<>(tables.size() * arguments.numQueries);
 
         final Map<String, ValueGenerator> typeGenerators = newTypeGenerators();
         final Map<String, ValueGenerator> dataGenerators =
@@ -81,7 +82,7 @@ public enum Generate {;
         for (final Column column : table.columns) {
             if (column.isAutoIncrementing) continue;
 
-            columnList.add("`"+column.name+"`");
+            columnList.add("`" + column.name + "`");
             columnValues.add("?");
         }
 
@@ -96,12 +97,14 @@ public enum Generate {;
                 for (final Column column : table.columns) {
                     if (column.isAutoIncrementing) continue;
 
-                    column.valueSetter.setValue(j+1, statement);
+                    column.valueSetter.setValue(j + 1, statement);
                     j++;
                 }
                 statement.execute();
-            } catch (SQLException e) {
-                if (!ignoreErrors) throw e;
+            } catch (Exception e) {
+                if (!ignoreErrors) {
+                    e.printStackTrace();
+                }
                 System.err.println("[ERROR] Failed to execute query");
                 System.err.println("[ERROR] Query: " + insertQuery);
                 System.err.println("[ERROR] Error: " + e.getMessage());
@@ -119,7 +122,8 @@ public enum Generate {;
 
         if (column.isForeignKey()) return newForeignKeySetter(connection, column.fk);
 
-        if (usePatterns && column.hasPattern()) return newPatternSetter(dataGenerators, typeGenerators, ipsumGenerators, column);
+        if (usePatterns && column.hasPattern())
+            return newPatternSetter(dataGenerators, typeGenerators, ipsumGenerators, column);
 
         final var dataGenerator = detectGenerator(dataGenerators, column, null);
         if (dataGenerator != null) return dataGenerator.newValueSetter(column);
@@ -144,10 +148,10 @@ public enum Generate {;
     }
 
     private static final String
-        FILLDB_PATTERN = "filldb pattern ",
-        FILLDB_ENUM = "filldb enum ",
-        FILLDB_GENERATOR = "filldb generator ",
-        FILLDB_IPSUM = "filldb ipsum ";
+            FILLDB_PATTERN = "filldb pattern ",
+            FILLDB_ENUM = "filldb enum ",
+            FILLDB_GENERATOR = "filldb generator ",
+            FILLDB_IPSUM = "filldb ipsum ";
 
     private static ValueSetter newPatternSetter(final Map<String, ValueGenerator> dataGenerators
             , final Map<String, ValueGenerator> typeGenerators, final Map<String, LorumIpsumGenerator> ipsumGenerators
@@ -190,7 +194,7 @@ public enum Generate {;
     public static List<String> generateInsertQueries(final Connection connection, final List<Table> tables
             , final CliArguments arguments) throws SQLException {
 
-        final List<String> queries = new ArrayList<>(tables.size()*arguments.numQueries);
+        final List<String> queries = new ArrayList<>(tables.size() * arguments.numQueries);
 
         boolean allDone = false;
         while (!allDone) {
@@ -220,7 +224,7 @@ public enum Generate {;
             columnShouldQuote.add(shouldQuoteDataType(column.dataType));
         }
 
-        final String columns = columnList.stream().map(s -> "`"+s+"`").collect(joining(","));
+        final String columns = columnList.stream().map(s -> "`" + s + "`").collect(joining(","));
         final String insertQuery = format("INSERT INTO `%s` (%s) VALUES (%s);", table.name, columns,
                 join(",", columnValues));
 
@@ -231,7 +235,7 @@ public enum Generate {;
             while (resultSet.next()) {
                 for (int i = 0; i < columnList.size(); i++) {
                     final String value = resultSet.getString(columnList.get(i));
-                    values[i] = columnShouldQuote.get(i) ? toQuotedString(value): value;
+                    values[i] = columnShouldQuote.get(i) ? toQuotedString(value) : value;
                 }
                 queries.add(String.format(insertQuery, values));
             }
@@ -254,7 +258,7 @@ public enum Generate {;
         builder.append('\'');
 
         for (final char c : input.toCharArray()) {
-            if (c == '\\' || c =='\'') builder.append('\\');
+            if (c == '\\' || c == '\'') builder.append('\\');
             builder.append(c);
         }
 
